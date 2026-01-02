@@ -13,13 +13,94 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  CLIENT
+  ADMIN
+
+  @@map("role")
+}
+enum status {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  expired
+
+  @@map("status")
+}
+
+
+model Categorie{
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  products  Product[]
+
+  @@map("categories")
+}
+
+
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
   password  String
-  name      String?
+  lastName  String?
+  firstName String?
+  role       Role? @default(CLIENT)
+  address   String?
+  phone     String?
+  dateNaissance DateTime?
+  photo String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+
+  @@map("users")
+}
+
+model Order{
+  id        Int      @id @default(autoincrement())
+  clientId  Int
+  client    User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  status    status   @default(PENDING)
+  items     OrderItem[]
+  total     Float?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("users")
+  @@map("orders")
+}
+model OrderItem{
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity  Int
+
+  @@map("order_items")
+}
+
+model Product{
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  categoryId  Int
+  category    Categorie   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  inventory   Inventory?
+  orderItems  OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@map("products")
+}
+
+model Inventory{
+  id        Int     @id @default(autoincrement())
+  productId Int     @unique
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+
+  @@map("inventories")
 }
