@@ -4,6 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { winstonLogger } from './logger/winston.config';
+import LoggerInterceptor from './common/interceptors/logger.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: true , logger: winstonLogger });
@@ -19,7 +20,7 @@ async function bootstrap() {
     transform: true,
     forbidNonWhitelisted: true,
   }));
-
+  app.useGlobalInterceptors(new LoggerInterceptor());
   const config = new DocumentBuilder()
     .setTitle('YouShop API')
     .setDescription('API documentation for YouShop')
