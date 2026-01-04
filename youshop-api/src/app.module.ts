@@ -5,10 +5,27 @@ import { AuthModule } from './auth/auth.module';
 import { CategorieModule } from './categorie/categorie.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
-  imports: [AuthModule, CategorieModule, ProductsModule, OrdersModule],
+  imports: [
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 100,
+    }]),
+    AuthModule, 
+    CategorieModule, 
+    ProductsModule, 
+    OrdersModule
+  ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

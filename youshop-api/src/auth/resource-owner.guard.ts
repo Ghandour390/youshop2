@@ -29,7 +29,7 @@ export class ResourceOwnerGuard implements CanActivate {
       return true;
     }
 
-    const item = await this.prisma[resource.resourceName].findUnique({
+    const item = await (this.prisma as any)[resource.resourceName].findUnique({
       where: { id: resourceId },
     });
 
