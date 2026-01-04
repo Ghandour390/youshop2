@@ -4,13 +4,18 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Request } from 'express';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { ResourceOwnerGuard } from 'src/auth/resource-owner.guard';
+import { ResourceOwner } from 'src/auth/resource-owner.decorator';
 
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
+
   async create(@Req() req: Request, @Body() createOrderDto: CreateOrderDto) {
     if (!req.user || !(req.user as any).id) {
       throw new HttpException('User not authenticated', HttpStatus.UNAUTHORIZED);
@@ -23,6 +28,7 @@ export class OrdersController {
   }
 
   @Get()
+  @Roles('ADMIN')
   findAll() {
     return this.ordersService.findAll();
   }
@@ -33,6 +39,8 @@ export class OrdersController {
   }
 
   @Patch(':id')
+  @UseGuards(ResourceOwnerGuard)
+  @ResourceOwner('order')
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
     return this.ordersService.update(+id, updateOrderDto);
   }
@@ -40,11 +48,15 @@ export class OrdersController {
   
 
   @Delete(':id')
+  @UseGuards(ResourceOwnerGuard)
+  @ResourceOwner('order')
   remove(@Param('id') id: string) {
     return this.ordersService.remove(+id);
   }
 
   @Post(':id/confirm-payment')
+  @UseGuards(ResourceOwnerGuard)
+  @ResourceOwner('order')
   async confirmPayment(@Param('id') id: string) {
     try {
       return await this.ordersService.confirmPayment(+id);
