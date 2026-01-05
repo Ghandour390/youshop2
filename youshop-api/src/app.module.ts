@@ -8,6 +8,7 @@ import { OrdersModule } from './orders/orders.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
+import { StripeModule } from './stripe/stripe.module';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { MailModule } from './mail/mail.module';
     AuthModule, 
     CategorieModule, 
     ProductsModule, 
-    OrdersModule, MailModule
+    OrdersModule, MailModule, StripeModule
   ],
   controllers: [AppController],
   providers: [

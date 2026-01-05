@@ -1,13 +1,50 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import prisma from 'lib/prisma';
 import { REDIS_CLIENT } from '../products/redis.module';
 import Redis from 'ioredis';
+import { StripeService } from 'src/stripe/stripe.service';
 
 
 @Injectable()
-export class OrdersService {
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
+export class OrdersService implements OnModuleInit {
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis,
+  @Inject(StripeService) private readonly stripeService: StripeService) {}
+
+  async onModuleInit() {
+    this.startExpirationListener();
+  }
+
+  private startExpirationListener() {
+    const subscriber = this.redis.duplicate();
+    subscriber.config('SET', 'notify-keyspace-events', 'Ex');
+    subscriber.psubscribe('__keyevent@0__:expired');
+    
+    subscriber.on('pmessage', async (pattern, channel, expiredKey) => {
+      if (expiredKey.startsWith('order:')) {
+        const orderId = parseInt(expiredKey.split(':')[1]);
+        try {
+          const order = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: { items: true }
+          });
+          
+          if (order && order.status === 'PENDING') {
+            await prisma.order.update({
+              where: { id: orderId },
+              data: { status: 'expired' }
+            });
+            
+            for (const item of order.items) {
+              await this.redis.decrby(`product:${item.productId}:reserved`, item.quantity);
+            }
+          }
+        } catch (error) {
+          console.error(`Error handling expired order ${orderId}:`, error);
+        }
+      }
+    });
+  }
 
   async create(userId: number, createOrderData: any) {
     let totalPrice = 0;
@@ -39,7 +76,7 @@ export class OrdersService {
       // Calculate total price
       totalPrice += product.price * item.quantity;
     }
-
+    
     // Create order
     const order = await prisma.order.create({
       data: {
@@ -61,6 +98,14 @@ export class OrdersService {
       },
     });
 
+    const paymentIntent = await this.stripeService.createPaymentIntent(totalPrice * 100, 'usd', { orderId: order.id.toString() });
+    
+   const updateOrder = await prisma.order.update({
+      where: { id: order.id },
+      data: { paymentIntentId: paymentIntent.id },
+    });
+   
+
     // Reserve products in Redis
     for (const item of createOrderData) {
       await this.redis.incrby(`product:${item.productId}:reserved`, item.quantity);
@@ -74,23 +119,7 @@ export class OrdersService {
       JSON.stringify(order)
     );
 
-    setTimeout(async () => {
-      const orderInRedis = await this.redis.get(`order:${order.id}`);
-      if (orderInRedis) {
-        const orderData = JSON.parse(orderInRedis);
-        for (const item of orderData.items) {
-          await this.redis.decrby(`product:${item.productId}:reserved`, item.quantity);
-        }
-        await this.redis.del(`order:${order.id}`);
-        
-        // Delete order from database
-        await prisma.order.delete({
-          where: { id: order.id },
-        });
-      }
-    }, 1200000);
-
-    return order;
+    return { updateOrder, clientSecret: paymentIntent.client_secret  };
   }
 
   async findAll() {
@@ -139,7 +168,6 @@ export class OrdersService {
   }
 
   async confirmPayment(orderId: number) {
-    // Check if order exists in Redis
     const orderInRedis = await this.redis.get(`order:${orderId}`);
     
     if (!orderInRedis) {
@@ -148,7 +176,11 @@ export class OrdersService {
 
     const order = JSON.parse(orderInRedis);
 
-    // Update inventory for each product
+    await prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'PAID' }
+    });
+
     for (const item of order.items) {
       await prisma.inventory.update({
         where: { productId: item.productId },
@@ -158,11 +190,9 @@ export class OrdersService {
           },
         },
       });
-      // Release reserved quantity from Redis
       await this.redis.decrby(`product:${item.productId}:reserved`, item.quantity);
     }
 
-    // Delete order from Redis
     await this.redis.del(`order:${orderId}`);
 
     return { message: 'Payment confirmed, inventory updated' };

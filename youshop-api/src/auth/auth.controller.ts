@@ -55,7 +55,7 @@ export class AuthController {
     return this.authService.resetPassword(body.email, body.code, body.newPassword);
   }
 
-  @Post('verifyCode')
+  @Post('verify-code')
   @ApiOperation({ summary: 'Verify code' })
   @ApiBody({ type: VerificationCodeDto })
   @ApiResponse({ status: 200, description: 'Code verified successfully' })
