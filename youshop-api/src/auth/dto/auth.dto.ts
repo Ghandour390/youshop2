@@ -34,3 +34,28 @@ export class RegisterDto {
   @IsString()
   lastName?: string;
 }
+
+export class ResetPasswordDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string; 
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  code: string;
+  @ApiProperty({ example: 'NewPassword123!' })
+  @IsString()
+  @MinLength(5)
+  @Matches(/((?=.*\d)|(?=.*\W+))(?![.\n])(?=.*[A-Z])(?=.*[a-z]).*$/, {
+    message: 'Password must contain uppercase, lowercase, and number or special character',
+  })
+  newPassword: string;
+} 
+
+export class VerificationCodeDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+  @ApiProperty({ example: '123456' })
+  @IsString()
+  code: string;
+}

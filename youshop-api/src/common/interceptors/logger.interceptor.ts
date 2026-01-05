@@ -15,23 +15,15 @@ import {
   
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
       const request = context.switchToHttp().getRequest();
-      const method = request.method;
-      const url = request.url;
-      const body = request.body;
-      const userAgent = request.get('user-agent') || '';
-      const ip = request.ip || request.connection.remoteAddress;
+      const { method, url, body, ip } = request;
       const now = Date.now();
         
-      this.logger.log(
-        `Incoming Request: ${method} ${url} - Body: ${JSON.stringify(body)} - User-Agent: ${userAgent} - IP: ${ip}`,
-      );
+      this.logger.log(`${method} ${url} - IP: ${ip}`);
       
       return next.handle().pipe( 
         tap(() => {
           const responseTime = Date.now() - now;
-          this.logger.log(
-            `Outgoing Response: ${method} ${url} - IP: ${ip} - Response Time: ${responseTime}ms`,
-          );
+          this.logger.log(`${method} ${url} - ${responseTime}ms`);
         }),
       );
     }

@@ -1,21 +1,46 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import Redis from 'ioredis';
+import { MailService } from '../mail/mail.service';
+
 
 @Injectable()
 export class AuthService {
-  constructor(
+  constructor(@Inject(Redis) private readonly redis: Redis,
+    @Inject(MailService) private readonly mailService: MailService,
     private prisma: PrismaService,
     private jwtService: JwtService,
   ) {}
 
+  async generateVerificationCode(email: string, sujet: string) {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await this.redis.set(`verification_code:${email}`, code, 'EX', 10 * 60);
+    await this.mailService.sendMail(
+      email,
+      sujet,
+      `Your verification code is: ${code} le code est valide pour 10 minutes.`,
+    );
+    return true;
+  }
+
+  validationCode(email: string, code: string) {
+    return this.redis.get(`verification_code:${email}`).then((storedCode) => {
+      if (storedCode === code) {
+        this.prisma.user.update({
+          where: { email },
+          data: { verificationEmail: true },
+        });
+        this.redis.del(`verification_code:${email}`);
+        return true;
+      }
+      return false;
+    });
+  }
+
   async register(email: string, password: string, firstName?: string, lastName?: string) {
     const hashedPassword = await bcrypt.hash(password, 10);
-    
-
-    // return {email};
-
     const user = await this.prisma.user.create({
       data: {
         email,
@@ -24,7 +49,7 @@ export class AuthService {
         lastName,
       },
     });
-
+    await this.generateVerificationCode(email, "Verification Email");
     const { password: _, ...result } = user;
     return {
       user: result,
@@ -47,4 +72,39 @@ export class AuthService {
       token: this.jwtService.sign({ sub: user.id, email: user.email }),
     };
   }
+
+  async motPassOublie(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    await this.generateVerificationCode(email, "Reset Password");
+    return { message: 'Verification code sent to email' };
+  }
+
+  async resetPassword(email: string, code: string, newPassword: string) {
+    const isValidCode = await this.validationCode(email, code);
+    if (!isValidCode) {
+      throw new UnauthorizedException('Invalid code');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({
+      where: { email },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Password reset successfully' };
+  }
+
+  async verifyCode(email: string, code: string) {
+    const storedCode = await this.redis.get(`verification_code:${email}`);
+    if (!storedCode || storedCode !== code) {
+      throw new UnauthorizedException('Invalid or expired code');
+    }
+    return { message: 'Code verified successfully' };
+  }
+
 }

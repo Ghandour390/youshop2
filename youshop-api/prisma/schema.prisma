@@ -43,6 +43,7 @@ model Categorie{
 model User {
   id        Int      @id @default(autoincrement())
   email     String   @unique
+  verificationEmail Boolean  @default(false)  
   password  String
   lastName  String?
   firstName String?
