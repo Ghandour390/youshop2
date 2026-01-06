@@ -6,6 +6,7 @@ import { MailService } from '../mail/mail.service';
 import { UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import Redis from 'ioredis';
+import { REDIS_CLIENT } from '../products/redis.module';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -33,7 +34,7 @@ describe('AuthService', () => {
           useValue: { sign: jest.fn(() => 'token') },
         },
         {
-          provide: Redis,
+          provide: REDIS_CLIENT,
           useValue: {
             set: jest.fn(),
             get: jest.fn(),
@@ -50,7 +51,7 @@ describe('AuthService', () => {
     service = module.get<AuthService>(AuthService);
     prismaService = module.get<PrismaService>(PrismaService);
     jwtService = module.get<JwtService>(JwtService);
-    redis = module.get<Redis>(Redis);
+    redis = module.get<Redis>(REDIS_CLIENT);
     mailService = module.get<MailService>(MailService);
   });
 

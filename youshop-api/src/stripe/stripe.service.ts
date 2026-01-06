@@ -17,4 +17,8 @@ export class StripeService {
             metadata,
         });
     }
+
+    getStripeInstance(): Stripe {
+        return this.stripe;
+    }
 }

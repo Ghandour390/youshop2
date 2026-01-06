@@ -4,6 +4,7 @@ import prisma from 'lib/prisma';
 import { REDIS_CLIENT } from '../products/redis.module';
 import Redis from 'ioredis';
 import { StripeService } from 'src/stripe/stripe.service';
+import { Stripe } from 'stripe';
 
 
 @Injectable()
@@ -196,5 +197,28 @@ export class OrdersService implements OnModuleInit {
     await this.redis.del(`order:${orderId}`);
 
     return { message: 'Payment confirmed, inventory updated' };
+  }
+
+  private constructEvent(rawBody: Buffer, signature: string): Stripe.Event {
+    return this.stripeService.getStripeInstance().webhooks.constructEvent(
+      rawBody,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET || ''
+    );
+  }
+
+  async handleStripeWebhook(rawBody: Buffer, signature: string) {
+    const event = this.constructEvent(rawBody, signature);
+    
+    if (event.type === 'payment_intent.succeeded') {
+      const paymentIntent = event.data.object as Stripe.PaymentIntent;
+      const orderId = parseInt(paymentIntent.metadata?.orderId || '0');
+      
+      if (orderId) {
+        await this.confirmPayment(orderId);
+      }
+    }
+    
+    return { received: true };
   }
 }
