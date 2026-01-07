@@ -45,21 +45,21 @@ export class OrdersController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard, ResourceOwnerGuard)
+  @UseGuards(JwtAuthGuard, ResourceOwnerGuard)
   @ResourceOwner('order')
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(+id);
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard, ResourceOwnerGuard)
+  @UseGuards(JwtAuthGuard, ResourceOwnerGuard)
   @ResourceOwner('order')
   update(@Param('id') id: string, @Body() updateOrderDto: UpdateOrderDto) {
     return this.ordersService.update(+id, updateOrderDto);
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard, ResourceOwnerGuard)
+  @UseGuards(JwtAuthGuard, ResourceOwnerGuard)
   @ResourceOwner('order')
   remove(@Param('id') id: string) {
     return this.ordersService.remove(+id);

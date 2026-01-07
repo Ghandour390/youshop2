@@ -5,6 +5,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { winstonLogger } from './logger/winston.config';
 import LoggerInterceptor from './common/interceptors/logger.interceptor';
+import { ResponseInterceptor } from './common/interceptors/response.interceptor';
+import { HttpExceptionFilter, AllExceptionsFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bodyParser: true , logger: winstonLogger });
@@ -20,7 +22,8 @@ async function bootstrap() {
     transform: true,
     forbidNonWhitelisted: true,
   }));
-  app.useGlobalInterceptors(new LoggerInterceptor());
+  app.useGlobalFilters(new AllExceptionsFilter(), new HttpExceptionFilter());
+  app.useGlobalInterceptors(new ResponseInterceptor());
   const config = new DocumentBuilder()
     .setTitle('YouShop API')
     .setDescription('API documentation for YouShop')

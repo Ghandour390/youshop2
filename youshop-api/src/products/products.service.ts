@@ -3,6 +3,7 @@ import prisma from 'lib/prisma';
 import { REDIS_CLIENT } from './redis.module';
 import Redis from 'ioredis';
 import { MinioService } from '../minio/minio.service';
+import e from 'express';
 
 @Injectable()
 export class ProductsService {
@@ -42,8 +43,11 @@ export class ProductsService {
     });
   }
 
-  async findAll() {
+
+  async findAll(categoryId?: number) {
+    const where = categoryId ? { categoryId } : {};
     const products = await prisma.product.findMany({
+      where,
       include: {
         category: true,
         inventory: true,
@@ -66,6 +70,8 @@ export class ProductsService {
 
     return products;
   }
+
+
 
   async findOne(id: number) {
     const product = await prisma.product.findUnique({

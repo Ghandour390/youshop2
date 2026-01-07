@@ -1,4 +1,4 @@
-import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
+import { Injectable, Inject, OnModuleInit, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import prisma from 'lib/prisma';
 import { REDIS_CLIENT } from '../products/redis.module';
@@ -9,6 +9,8 @@ import { Stripe } from 'stripe';
 
 @Injectable()
 export class OrdersService implements OnModuleInit {
+  private readonly logger = new Logger(OrdersService.name);
+
   constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis,
   @Inject(StripeService) private readonly stripeService: StripeService) {}
 
@@ -31,6 +33,8 @@ export class OrdersService implements OnModuleInit {
           });
           
           if (order && order.status === 'PENDING') {
+            this.logger.warn(`⏰ Order #${orderId} EXPIRED - Releasing stock`, Date.now().toString());
+            
             await prisma.order.update({
               where: { id: orderId },
               data: { status: 'expired' }
@@ -39,9 +43,11 @@ export class OrdersService implements OnModuleInit {
             for (const item of order.items) {
               await this.redis.decrby(`product:${item.productId}:reserved`, item.quantity);
             }
+            
+            this.logger.log(`✅ Order #${orderId} status changed to expired`, Date.now().toString());
           }
         } catch (error) {
-          console.error(`Error handling expired order ${orderId}:`, error);
+          this.logger.error(`Error handling expired order ${orderId}:`, error);
         }
       }
     });
@@ -216,6 +222,7 @@ export class OrdersService implements OnModuleInit {
       
       if (orderId) {
         await this.confirmPayment(orderId);
+        
       }
     }
     

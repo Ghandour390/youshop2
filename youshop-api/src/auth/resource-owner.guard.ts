@@ -21,10 +21,6 @@ export class ResourceOwnerGuard implements CanActivate {
     const user = request.user;
     const resourceId = +request.params.id;
 
-    if (!user) {
-      throw new ForbiddenException('User not authenticated');
-    }
-
     if (user.role === 'ADMIN') {
       return true;
     }

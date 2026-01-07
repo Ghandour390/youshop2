@@ -59,3 +59,11 @@ export class VerificationCodeDto {
   @IsString()
   code: string;
 }
+
+class motPassOublieDto {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail()
+  email: string;
+}
+
+export { motPassOublieDto };

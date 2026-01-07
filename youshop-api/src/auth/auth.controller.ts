@@ -2,7 +2,7 @@ import { Controller, Post, Body, UseGuards, Get, Request } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { LoginDto, RegisterDto, VerificationCodeDto, ResetPasswordDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, VerificationCodeDto, ResetPasswordDto, motPassOublieDto } from './dto/auth.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -23,7 +23,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Login user' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({ status: 200, description: 'User successfully logged in' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized or email not verified. Check your email inbox for the verification code.' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto.email, loginDto.password);
   }
@@ -39,7 +40,7 @@ export class AuthController {
 
   @Post('motPassOublie')
   @ApiOperation({ summary: 'Request password reset' })
-  @ApiBody({ type: LoginDto })
+  @ApiBody({ type: motPassOublieDto  })
   @ApiResponse({ status: 200, description: 'Verification code sent to email' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async motPassOublie(@Body() body: { email: string }) {

@@ -66,6 +66,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    if (user.verificationEmail === false) {
+      await this.generateVerificationCode(email, "Verification Email");
+      throw new UnauthorizedException('email not verified voir votre boite email pour le code de verification');
+    }
     const { password: _, ...result } = user;
     return {
       user: result,
