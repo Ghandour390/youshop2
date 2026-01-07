@@ -19,6 +19,7 @@ enum Role {
 
   @@map("role")
 }
+
 enum status {
   PENDING
   PAID
@@ -30,56 +31,55 @@ enum status {
   @@map("status")
 }
 
-
-model Categorie{
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  products  Product[]
+model Categorie {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  products Product[]
 
   @@map("categories")
 }
 
-
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  verificationEmail Boolean  @default(false)  
-  password  String
-  lastName  String?
-  firstName String?
-  role       Role? @default(CLIENT)
-  address   String?
-  phone     String?
-  dateNaissance DateTime?
-  photo String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  orders    Order[]
+  id                Int       @id @default(autoincrement())
+  email             String    @unique
+  verificationEmail Boolean   @default(false)
+  password          String
+  lastName          String?
+  firstName         String?
+  role              Role?     @default(CLIENT)
+  address           String?
+  phone             String?
+  dateNaissance     DateTime?
+  photo             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  orders            Order[]
 
   @@map("users")
 }
 
-model Order{
-  id        Int      @id @default(autoincrement())
-  clientId  Int
-  client    User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  status    status   @default(PENDING)
-  items     OrderItem[]
-  total     Float?
-  paymentIntentId String? @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Order {
+  id              Int         @id @default(autoincrement())
+  clientId        Int
+  client          User        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  status          status      @default(PENDING)
+  items           OrderItem[]
+  total           Float?
+  paymentIntentId String?     @unique
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   @@index([clientId])
   @@index([status])
   @@map("orders")
 }
-model OrderItem{
-  id        Int      @id @default(autoincrement())
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
   orderId   Int
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId Int
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Restrict)
   quantity  Int
 
   @@index([orderId])
@@ -87,38 +87,42 @@ model OrderItem{
   @@map("order_items")
 }
 
-model Product{
-  id          Int         @id @default(autoincrement())
+model Product {
+  id          Int            @id @default(autoincrement())
   name        String
   description String?
   price       Float
   categoryId  Int
-  category    Categorie   @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  category    Categorie      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   images      ProductImage[]
   inventory   Inventory?
   orderItems  OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   @@index([categoryId])
   @@index([name])
+  @@index([price])
+  @@index([createdAt])
   @@map("products")
 }
 
-model ProductImage{
+model ProductImage {
   id        Int     @id @default(autoincrement())
   productId Int
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   imageUrl  String
-  
+
+  @@index([productId])
   @@map("product_images")
 }
 
-model Inventory{
+model Inventory {
   id        Int     @id @default(autoincrement())
   productId Int     @unique
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   quantity  Int
 
+  @@index([quantity])
   @@map("inventories")
 }

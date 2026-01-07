@@ -4,7 +4,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { winstonLogger } from './logger/winston.config';
-import LoggerInterceptor from './common/interceptors/logger.interceptor';
+// import LoggerInterceptor from './common/interceptors/logger.interceptor';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { HttpExceptionFilter, AllExceptionsFilter } from './common/filters/http-exception.filter';
 
@@ -15,19 +15,34 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'stripe-signature'],
   });
   
   app.useGlobalPipes(new ValidationPipe({ 
     whitelist: true, 
     transform: true,
     forbidNonWhitelisted: true,
+    transformOptions: {
+      enableImplicitConversion: true,
+    },
   }));
   app.useGlobalFilters(new AllExceptionsFilter(), new HttpExceptionFilter());
   app.useGlobalInterceptors(new ResponseInterceptor());
+  
   const config = new DocumentBuilder()
     .setTitle('YouShop API')
     .setDescription('API documentation for YouShop')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Enter your JWT token',
+      },
+      'JWT-auth',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);

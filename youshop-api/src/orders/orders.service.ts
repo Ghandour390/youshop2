@@ -183,37 +183,54 @@ export class OrdersService implements OnModuleInit {
 
     const order = JSON.parse(orderInRedis);
 
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { status: 'PAID' }
+    // Use transaction for atomic operations
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id: orderId },
+        data: { status: 'PAID' }
+      });
+
+      // Batch update inventory
+      for (const item of order.items) {
+        await tx.inventory.update({
+          where: { productId: item.productId },
+          data: {
+            quantity: {
+              decrement: item.quantity,
+            },
+          },
+        });
+      }
     });
 
+    // Update Redis in pipeline for better performance
+    const pipeline = this.redis.pipeline();
     for (const item of order.items) {
-      await prisma.inventory.update({
-        where: { productId: item.productId },
-        data: {
-          quantity: {
-            decrement: item.quantity,
-          },
-        },
-      });
-      await this.redis.decrby(`product:${item.productId}:reserved`, item.quantity);
+      pipeline.decrby(`product:${item.productId}:reserved`, item.quantity);
     }
-
-    await this.redis.del(`order:${orderId}`);
+    pipeline.del(`order:${orderId}`);
+    await pipeline.exec();
 
     return { message: 'Payment confirmed, inventory updated' };
   }
 
   private constructEvent(rawBody: Buffer, signature: string): Stripe.Event {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new Error('STRIPE_WEBHOOK_SECRET is not configured');
+    }
     return this.stripeService.getStripeInstance().webhooks.constructEvent(
       rawBody,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET || ''
+      webhookSecret
     );
   }
 
   async handleStripeWebhook(rawBody: Buffer, signature: string) {
+    if (!signature) {
+      throw new Error('Missing stripe-signature header');
+    }
+    
     const event = this.constructEvent(rawBody, signature);
     
     if (event.type === 'payment_intent.succeeded') {

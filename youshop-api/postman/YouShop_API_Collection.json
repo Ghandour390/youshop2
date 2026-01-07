@@ -1,0 +1,1471 @@
+{
+  "info": {
+    "_postman_id": "youshop-api-collection-2026",
+    "name": "YouShop API - Complete Collection",
+    "description": "Collection complète pour tester l'API YouShop E-commerce.\n\n🔑 **Credentials:**\n- Admin: admin@youshop.ma / Admin@123\n- Client: sara.benali@gmail.com / Client@123\n\n📝 **Instructions:**\n1. Importer cette collection dans Postman\n2. Créer un environnement avec la variable `baseUrl`\n3. Exécuter 'Login Client' ou 'Login Admin' pour obtenir le token\n4. Le token est automatiquement sauvegardé dans la variable `authToken`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "stripeUrl",
+      "value": "https://api.stripe.com/v1",
+      "type": "string"
+    },
+    {
+      "key": "stripeSecretKey",
+      "value": "sk_test_YOUR_KEY_HERE",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clientToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "lastProductId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "clientSecret",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "paymentIntentId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "description": "Endpoints d'authentification: login, register, reset password",
+      "item": [
+        {
+          "name": "Register New User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.collectionVariables.set('authToken', response.data.token);",
+                  "    }",
+                  "    pm.test('User registered successfully', function() {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"nouveau.client@gmail.com\",\n    \"password\": \"MonPassword@123\",\n    \"firstName\": \"Mohammed\",\n    \"lastName\": \"El Fassi\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Créer un nouveau compte utilisateur.\n\n**Règles mot de passe:**\n- Minimum 8 caractères\n- Au moins une majuscule\n- Au moins une minuscule\n- Au moins un chiffre ou caractère spécial"
+          }
+        },
+        {
+          "name": "Login Client",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.collectionVariables.set('authToken', response.data.token);",
+                  "        pm.collectionVariables.set('clientToken', response.data.token);",
+                  "        console.log('✅ Token saved to authToken and clientToken');",
+                  "    }",
+                  "    pm.test('Login successful', function() {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"sara.benali@gmail.com\",\n    \"password\": \"Client@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Connexion avec un compte client.\n\n**Comptes disponibles:**\n- sara.benali@gmail.com\n- youssef.el.amrani@gmail.com\n- fatima.zahrae@gmail.com\n- omar.tazi@gmail.com\n\n**Mot de passe:** Client@123"
+          }
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.collectionVariables.set('authToken', response.data.token);",
+                  "        pm.collectionVariables.set('adminToken', response.data.token);",
+                  "        console.log('✅ Token saved to authToken and adminToken');",
+                  "    }",
+                  "    pm.test('Admin login successful', function() {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"admin@youshop.ma\",\n    \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Connexion avec le compte administrateur.\n\n**Credentials:**\n- Email: admin@youshop.ma\n- Password: Admin@123"
+          }
+        },
+        {
+          "name": "Get Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Profile retrieved', function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "profile"]
+            },
+            "description": "Récupérer le profil de l'utilisateur connecté.\n\n⚠️ **Nécessite un token valide**"
+          }
+        },
+        {
+          "name": "Forgot Password (Request Code)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"sara.benali@gmail.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/motPassOublie",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "motPassOublie"]
+            },
+            "description": "Demander un code de réinitialisation de mot de passe.\n\nUn code à 6 chiffres sera envoyé par email."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"sara.benali@gmail.com\",\n    \"code\": \"123456\",\n    \"newPassword\": \"NewPassword@456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/resetPassword",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "resetPassword"]
+            },
+            "description": "Réinitialiser le mot de passe avec le code reçu par email.\n\n⚠️ Remplacer `code` par le code reçu."
+          }
+        },
+        {
+          "name": "Verify Email Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"nouveau.client@gmail.com\",\n    \"code\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-code",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "verify-code"]
+            },
+            "description": "Vérifier l'email avec le code reçu après l'inscription."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📁 Categories",
+      "description": "Gestion des catégories de produits",
+      "item": [
+        {
+          "name": "Get All Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Categories retrieved', function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"]
+            },
+            "description": "Récupérer toutes les catégories.\n\n**Catégories disponibles:**\n- Électronique\n- Vêtements Homme\n- Vêtements Femme\n- Maison & Décoration\n- Sports & Fitness\n- Beauté & Santé\n- Livres & Papeterie\n- Jouets & Enfants"
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/categories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "1"]
+            },
+            "description": "Récupérer une catégorie par son ID."
+          }
+        },
+        {
+          "name": "Create Category (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Accessoires Auto\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories"]
+            },
+            "description": "Créer une nouvelle catégorie.\n\n🔒 **Admin uniquement**"
+          }
+        },
+        {
+          "name": "Update Category (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"High-Tech & Gaming\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/categories/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "1"]
+            },
+            "description": "Mettre à jour une catégorie.\n\n🔒 **Admin uniquement**"
+          }
+        },
+        {
+          "name": "Delete Category (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/categories/9",
+              "host": ["{{baseUrl}}"],
+              "path": ["categories", "9"]
+            },
+            "description": "Supprimer une catégorie.\n\n🔒 **Admin uniquement**\n\n⚠️ Ne peut pas supprimer si des produits y sont associés."
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Products",
+      "description": "Gestion des produits",
+      "item": [
+        {
+          "name": "Get All Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Products retrieved', function() {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    if (response.data.length > 0) {",
+                  "        pm.collectionVariables.set('lastProductId', response.data[0].id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"]
+            },
+            "description": "Récupérer tous les produits avec leur inventaire et images."
+          }
+        },
+        {
+          "name": "Get Products by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?categoryId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                {
+                  "key": "categoryId",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Filtrer les produits par catégorie.\n\n**IDs des catégories:**\n- 1: Électronique\n- 2: Vêtements Homme\n- 3: Vêtements Femme\n- 4: Maison & Décoration\n- 5: Sports & Fitness\n- 6: Beauté & Santé\n- 7: Livres & Papeterie\n- 8: Jouets & Enfants"
+          }
+        },
+        {
+          "name": "Get Product by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "1"]
+            },
+            "description": "Récupérer un produit par son ID avec:\n- Détails complets\n- Catégorie\n- Inventaire (quantité disponible)\n- Images"
+          }
+        },
+        {
+          "name": "Create Product (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('lastProductId', response.data.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "name",
+                  "value": "Casque Bluetooth Sony WH-1000XM5",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "Casque sans fil premium avec réduction de bruit active leader du marché, 30h d'autonomie, audio Hi-Res.",
+                  "type": "text"
+                },
+                {
+                  "key": "price",
+                  "value": "3999",
+                  "type": "text"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "quantity",
+                  "value": "50",
+                  "type": "text"
+                },
+                {
+                  "key": "images",
+                  "type": "file",
+                  "src": [],
+                  "description": "Ajouter jusqu'à 5 images"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"]
+            },
+            "description": "Créer un nouveau produit avec images.\n\n🔒 **Admin uniquement**\n\n**Champs:**\n- name: Nom du produit\n- description: Description détaillée\n- price: Prix en DH\n- categoryId: ID de la catégorie\n- quantity: Stock initial\n- images: Jusqu'à 5 images (optionnel)"
+          }
+        },
+        {
+          "name": "Update Product (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "price",
+                  "value": "12999",
+                  "type": "text"
+                },
+                {
+                  "key": "description",
+                  "value": "iPhone 15 Pro Max - PROMO SOLDES -10%",
+                  "type": "text"
+                },
+                {
+                  "key": "quantity",
+                  "value": "100",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/products/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "1"]
+            },
+            "description": "Mettre à jour un produit.\n\n🔒 **Admin uniquement**\n\nTous les champs sont optionnels."
+          }
+        },
+        {
+          "name": "Delete Product (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/products/{{lastProductId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["products", "{{lastProductId}}"]
+            },
+            "description": "Supprimer un produit.\n\n🔒 **Admin uniquement**\n\n⚠️ Supprime aussi les images associées."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛒 Orders",
+      "description": "Gestion des commandes",
+      "item": [
+        {
+          "name": "Create Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.updateOrder) {",
+                  "        pm.collectionVariables.set('lastOrderId', response.data.updateOrder.id);",
+                  "        console.log('✅ Order ID saved:', response.data.updateOrder.id);",
+                  "    }",
+                  "    pm.test('Order created', function() {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clientToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"items\": [\n        {\n            \"productId\": 1,\n            \"quantity\": 1\n        },\n        {\n            \"productId\": 5,\n            \"quantity\": 2\n        }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Créer une nouvelle commande.\n\n🔐 **Authentification requise**\n\n**Retourne:**\n- Détails de la commande\n- `clientSecret` pour le paiement Stripe\n\n**Produits populaires pour test:**\n- 1: iPhone 15 Pro Max (14999 DH)\n- 5: AirPods Pro (2999 DH)\n- 9: Costume Slim Fit (1999 DH)\n- 25: Machine Nespresso (1999 DH)"
+          }
+        },
+        {
+          "name": "Get All Orders (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders"]
+            },
+            "description": "Récupérer toutes les commandes.\n\n🔒 **Admin uniquement**"
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{lastOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{lastOrderId}}"]
+            },
+            "description": "Récupérer une commande par son ID.\n\n🔐 **Propriétaire ou Admin**"
+          }
+        },
+        {
+          "name": "Update Order Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"SHIPPED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{lastOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{lastOrderId}}"]
+            },
+            "description": "Mettre à jour le statut d'une commande.\n\n**Statuts disponibles:**\n- PENDING\n- PAID\n- SHIPPED\n- DELIVERED\n- CANCELLED\n- expired"
+          }
+        },
+        {
+          "name": "Confirm Payment (Manual)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clientToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{lastOrderId}}/confirm-payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{lastOrderId}}", "confirm-payment"]
+            },
+            "description": "Confirmer le paiement d'une commande.\n\n⚠️ **À utiliser pour tests uniquement**\n\nEn production, le paiement est confirmé via webhook Stripe."
+          }
+        },
+        {
+          "name": "Delete Order",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/orders/{{lastOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "{{lastOrderId}}"]
+            },
+            "description": "Supprimer une commande.\n\n🔐 **Propriétaire ou Admin**"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Stripe Webhook",
+      "description": "Webhook pour les événements Stripe",
+      "item": [
+        {
+          "name": "Stripe Webhook (payment_intent.succeeded)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "stripe-signature",
+                "value": "test_signature"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"payment_intent.succeeded\",\n    \"data\": {\n        \"object\": {\n            \"id\": \"pi_test_123\",\n            \"metadata\": {\n                \"orderId\": \"1\"\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/orders/webhook",
+              "host": ["{{baseUrl}}"],
+              "path": ["orders", "webhook"]
+            },
+            "description": "⚠️ **Pour tests locaux uniquement**\n\nEn production, ce webhook est appelé par Stripe avec une signature valide.\n\nPour tester avec Stripe CLI:\n```bash\nstripe listen --forward-to localhost:3000/orders/webhook\n```"
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Stripe Payments (Backend)",
+      "description": "Endpoints Stripe via notre backend - Flow sécurisé",
+      "item": [
+        {
+          "name": "1. Create Payment (Get clientSecret)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.clientSecret) {",
+                  "        pm.collectionVariables.set('clientSecret', response.clientSecret);",
+                  "        pm.collectionVariables.set('paymentIntentId', response.paymentIntentId);",
+                  "        console.log('✅ clientSecret saved:', response.clientSecret);",
+                  "        console.log('✅ paymentIntentId saved:', response.paymentIntentId);",
+                  "    }",
+                  "    if (response.order && response.order.id) {",
+                  "        pm.collectionVariables.set('lastOrderId', response.order.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"items\": [\n        { \"productId\": 1, \"quantity\": 1 },\n        { \"productId\": 5, \"quantity\": 2 }\n    ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/stripe/create-payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["stripe", "create-payment"]
+            },
+            "description": "**Step 1:** Créer une commande et obtenir clientSecret\n\n✅ **Amount calculé depuis la database (sécurisé)**\n\n**Retourne:**\n- `clientSecret` - Pour compléter le paiement\n- `paymentIntentId` - ID du PaymentIntent\n- `order` - Détails de la commande"
+          }
+        },
+        {
+          "name": "2. Confirm Payment (Test Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.test('Payment successful', function() {",
+                  "        pm.expect(response.success).to.be.true;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"clientSecret\": \"{{clientSecret}}\",\n    \"testToken\": \"tok_visa\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/stripe/confirm-payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["stripe", "confirm-payment"]
+            },
+            "description": "**Step 2:** Confirmer le paiement avec un test token\n\n⚠️ **Pour tests Postman uniquement**\n\nEn production, le frontend utilise Stripe.js\n\n**Test Tokens:**\n- `tok_visa` - Visa Success\n- `tok_mastercard` - Mastercard Success\n- `tok_chargeDeclined` - Card Declined\n- `tok_chargeDeclinedInsufficientFunds` - Insufficient Funds"
+          }
+        },
+        {
+          "name": "Get Test Tokens",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stripe/test-tokens",
+              "host": ["{{baseUrl}}"],
+              "path": ["stripe", "test-tokens"]
+            },
+            "description": "Liste des test tokens disponibles pour tester différents scénarios de paiement."
+          }
+        },
+        {
+          "name": "Stripe Webhook",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "stripe-signature",
+                "value": "test_signature"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"type\": \"payment_intent.succeeded\",\n    \"data\": {\n        \"object\": {\n            \"id\": \"{{paymentIntentId}}\",\n            \"metadata\": {\n                \"orderId\": \"{{lastOrderId}}\"\n            }\n        }\n    }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/stripe/webhook",
+              "host": ["{{baseUrl}}"],
+              "path": ["stripe", "webhook"]
+            },
+            "description": "Webhook Stripe pour les événements de paiement.\n\n⚠️ **En production**, Stripe envoie ce webhook automatiquement."
+          }
+        }
+      ]
+    },
+    {
+      "name": "🌐 Stripe Direct API",
+      "description": "Communiquer directement avec Stripe API (api.stripe.com)",
+      "item": [
+        {
+          "name": "1. Create PaymentIntent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('paymentIntentId', response.id);",
+                  "    pm.collectionVariables.set('clientSecret', response.client_secret);",
+                  "    console.log('✅ PaymentIntent ID:', response.id);",
+                  "    console.log('✅ Client Secret:', response.client_secret);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{stripeSecretKey}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "amount",
+                  "value": "5000",
+                  "description": "Amount in cents (5000 = $50.00)"
+                },
+                {
+                  "key": "currency",
+                  "value": "usd"
+                },
+                {
+                  "key": "metadata[orderId]",
+                  "value": "{{lastOrderId}}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{stripeUrl}}/payment_intents",
+              "host": ["{{stripeUrl}}"],
+              "path": ["payment_intents"]
+            },
+            "description": "**Créer un PaymentIntent directement avec Stripe**\n\n⚠️ **Nécessite stripeSecretKey**\n\n`amount` est en **cents** (1000 = $10.00)"
+          }
+        },
+        {
+          "name": "2. Confirm PaymentIntent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    console.log('✅ Payment Status:', response.status);",
+                  "    pm.test('Payment succeeded', function() {",
+                  "        pm.expect(response.status).to.equal('succeeded');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{stripeSecretKey}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "payment_method_data[type]",
+                  "value": "card"
+                },
+                {
+                  "key": "payment_method_data[card][number]",
+                  "value": "4242424242424242"
+                },
+                {
+                  "key": "payment_method_data[card][exp_month]",
+                  "value": "12"
+                },
+                {
+                  "key": "payment_method_data[card][exp_year]",
+                  "value": "2028"
+                },
+                {
+                  "key": "payment_method_data[card][cvc]",
+                  "value": "123"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{stripeUrl}}/payment_intents/{{paymentIntentId}}/confirm",
+              "host": ["{{stripeUrl}}"],
+              "path": ["payment_intents", "{{paymentIntentId}}", "confirm"]
+            },
+            "description": "**Confirmer un PaymentIntent avec carte test**\n\n⚠️ **Test mode uniquement**\n\n**Test Cards:**\n- `4242424242424242` - Success\n- `4000000000000002` - Declined\n- `4000000000009995` - Insufficient funds"
+          }
+        },
+        {
+          "name": "3. Retrieve PaymentIntent",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{stripeSecretKey}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{stripeUrl}}/payment_intents/{{paymentIntentId}}",
+              "host": ["{{stripeUrl}}"],
+              "path": ["payment_intents", "{{paymentIntentId}}"]
+            },
+            "description": "Récupérer les détails d'un PaymentIntent"
+          }
+        },
+        {
+          "name": "4. List PaymentIntents",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{stripeSecretKey}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{stripeUrl}}/payment_intents?limit=10",
+              "host": ["{{stripeUrl}}"],
+              "path": ["payment_intents"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lister tous les PaymentIntents"
+          }
+        },
+        {
+          "name": "Create PaymentMethod",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('paymentMethodId', response.id);",
+                  "    console.log('✅ PaymentMethod ID:', response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{stripeSecretKey}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "type",
+                  "value": "card"
+                },
+                {
+                  "key": "card[number]",
+                  "value": "4242424242424242"
+                },
+                {
+                  "key": "card[exp_month]",
+                  "value": "12"
+                },
+                {
+                  "key": "card[exp_year]",
+                  "value": "2028"
+                },
+                {
+                  "key": "card[cvc]",
+                  "value": "123"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{stripeUrl}}/payment_methods",
+              "host": ["{{stripeUrl}}"],
+              "path": ["payment_methods"]
+            },
+            "description": "Créer un PaymentMethod directement avec Stripe\n\n⚠️ **Test mode uniquement** - En production utilisez Stripe.js"
+          }
+        },
+        {
+          "name": "List Charges",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{stripeSecretKey}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{stripeUrl}}/charges?limit=10",
+              "host": ["{{stripeUrl}}"],
+              "path": ["charges"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lister tous les paiements effectués"
+          }
+        },
+        {
+          "name": "Get Balance",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{stripeSecretKey}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{stripeUrl}}/balance",
+              "host": ["{{stripeUrl}}"],
+              "path": ["balance"]
+            },
+            "description": "Voir le solde de votre compte Stripe"
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧪 Test Scenarios",
+      "description": "Scénarios de test complets",
+      "item": [
+        {
+          "name": "📋 Full Purchase Flow",
+          "item": [
+            {
+              "name": "1. Login as Client",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response.data && response.data.token) {",
+                      "    pm.collectionVariables.set('authToken', response.data.token);",
+                      "    pm.collectionVariables.set('clientToken', response.data.token);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"youssef.el.amrani@gmail.com\",\n    \"password\": \"Client@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "2. Browse Products",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products?categoryId=1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products"],
+                  "query": [{"key": "categoryId", "value": "1"}]
+                }
+              }
+            },
+            {
+              "name": "3. View Product Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/products/1",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products", "1"]
+                }
+              }
+            },
+            {
+              "name": "4. Create Order",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response.data && response.data.updateOrder) {",
+                      "    pm.collectionVariables.set('lastOrderId', response.data.updateOrder.id);",
+                      "    pm.collectionVariables.set('clientSecret', response.data.clientSecret);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Content-Type", "value": "application/json"},
+                  {"key": "Authorization", "value": "Bearer {{clientToken}}"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"items\": [\n        {\"productId\": 1, \"quantity\": 1},\n        {\"productId\": 5, \"quantity\": 1}\n    ]\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/orders",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["orders"]
+                }
+              }
+            },
+            {
+              "name": "5. Check Order Status",
+              "request": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{clientToken}}"}],
+                "url": {
+                  "raw": "{{baseUrl}}/orders/{{lastOrderId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["orders", "{{lastOrderId}}"]
+                }
+              }
+            },
+            {
+              "name": "6. Confirm Payment",
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Authorization", "value": "Bearer {{clientToken}}"}],
+                "url": {
+                  "raw": "{{baseUrl}}/orders/{{lastOrderId}}/confirm-payment",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["orders", "{{lastOrderId}}", "confirm-payment"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "📋 Admin Product Management",
+          "item": [
+            {
+              "name": "1. Login as Admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response.data && response.data.token) {",
+                      "    pm.collectionVariables.set('authToken', response.data.token);",
+                      "    pm.collectionVariables.set('adminToken', response.data.token);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Content-Type", "value": "application/json"}],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"email\": \"admin@youshop.ma\",\n    \"password\": \"Admin@123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              }
+            },
+            {
+              "name": "2. Create New Category",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {"key": "Content-Type", "value": "application/json"},
+                  {"key": "Authorization", "value": "Bearer {{adminToken}}"}
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Promotions Spéciales\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/categories",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["categories"]
+                }
+              }
+            },
+            {
+              "name": "3. Create New Product",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "const response = pm.response.json();",
+                      "if (response.data && response.data.id) {",
+                      "    pm.collectionVariables.set('lastProductId', response.data.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminToken}}"}],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {"key": "name", "value": "Pack Gaming Ultimate", "type": "text"},
+                    {"key": "description", "value": "PS5 + 2 Manettes + 3 Jeux - Offre limitée!", "type": "text"},
+                    {"key": "price", "value": "8999", "type": "text"},
+                    {"key": "categoryId", "value": "1", "type": "text"},
+                    {"key": "quantity", "value": "10", "type": "text"}
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/products",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products"]
+                }
+              }
+            },
+            {
+              "name": "4. Update Product Price",
+              "request": {
+                "method": "PATCH",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminToken}}"}],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {"key": "price", "value": "7999", "type": "text"},
+                    {"key": "description", "value": "PROMO -20% - PS5 + 2 Manettes + 3 Jeux!", "type": "text"}
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/products/{{lastProductId}}",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["products", "{{lastProductId}}"]
+                }
+              }
+            },
+            {
+              "name": "5. View All Orders",
+              "request": {
+                "method": "GET",
+                "header": [{"key": "Authorization", "value": "Bearer {{adminToken}}"}],
+                "url": {
+                  "raw": "{{baseUrl}}/orders",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["orders"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

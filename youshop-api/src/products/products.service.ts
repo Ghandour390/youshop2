@@ -3,7 +3,6 @@ import prisma from 'lib/prisma';
 import { REDIS_CLIENT } from './redis.module';
 import Redis from 'ioredis';
 import { MinioService } from '../minio/minio.service';
-import e from 'express';
 
 @Injectable()
 export class ProductsService {
@@ -29,12 +28,13 @@ export class ProductsService {
     });
 
     if (images?.length) {
-      for (const image of images) {
-        const imageUrl = await this.minioService.uploadImage(image);
-        await prisma.productImage.create({
-          data: { productId: product.id, imageUrl },
-        });
-      }
+      // Upload images in parallel for better performance
+      const uploadPromises = images.map(image => this.minioService.uploadImage(image));
+      const imageUrls = await Promise.all(uploadPromises);
+      
+      await prisma.productImage.createMany({
+        data: imageUrls.map(imageUrl => ({ productId: product.id, imageUrl })),
+      });
     }
     
     return prisma.product.findUnique({
@@ -55,15 +55,51 @@ export class ProductsService {
       },
     });
 
+    // Batch Redis operations for better performance (avoid N+1)
+    const productIds = products.map(p => p.id);
+    const reservedKeys = productIds.map(id => `product:${id}:reserved`);
+    
+    // Single Redis call for all reserved quantities
+    const reservedValues = reservedKeys.length > 0 
+      ? await this.redis.mget(...reservedKeys) 
+      : [];
+
+    // Process all image URLs in parallel
+    const imageUrlPromises: Promise<{ productId: number; imageId: number; url: string | null }>[] = [];
+    
     for (const product of products) {
+      if (product.images?.length) {
+        for (const img of product.images) {
+          imageUrlPromises.push(
+            this.minioService.getImageUrl(img.imageUrl)
+              .then(url => ({
+                productId: product.id,
+                imageId: img.id,
+                url,
+              }))
+              .catch(() => ({
+                productId: product.id,
+                imageId: img.id,
+                url: null,
+              }))
+          );
+        }
+      }
+    }
+    
+    const imageUrls = await Promise.all(imageUrlPromises);
+    const imageUrlMap = new Map(imageUrls.map(item => [`${item.productId}-${item.imageId}`, item.url]));
+
+    // Assign values to products
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
       if (product.inventory) {
-        const reservedQty = await this.redis.get(`product:${product.id}:reserved`);
-        const reserved = reservedQty ? parseInt(reservedQty) : 0;
+        const reserved = reservedValues[i] ? parseInt(reservedValues[i]) : 0;
         (product as any).availableQuantity = product.inventory.quantity - reserved;
       }
       if (product.images?.length) {
         for (const img of product.images) {
-          (img as any).url = await this.minioService.getImageUrl(img.imageUrl);
+          (img as any).url = imageUrlMap.get(`${product.id}-${img.id}`);
         }
       }
     }
@@ -90,9 +126,12 @@ export class ProductsService {
     }
     
     if (product?.images?.length) {
-      for (const img of product.images) {
-        (img as any).url = await this.minioService.getImageUrl(img.imageUrl);
-      }
+      // Get all image URLs in parallel
+      const urlPromises = product.images.map(img => this.minioService.getImageUrl(img.imageUrl));
+      const urls = await Promise.all(urlPromises);
+      product.images.forEach((img, index) => {
+        (img as any).url = urls[index];
+      });
     }
 
     return product;
@@ -121,12 +160,13 @@ export class ProductsService {
     });
 
     if (images?.length) {
-      for (const image of images) {
-        const imageUrl = await this.minioService.uploadImage(image);
-        await prisma.productImage.create({
-          data: { productId: id, imageUrl },
-        });
-      }
+      // Upload images in parallel
+      const uploadPromises = images.map(image => this.minioService.uploadImage(image));
+      const imageUrls = await Promise.all(uploadPromises);
+      
+      await prisma.productImage.createMany({
+        data: imageUrls.map(imageUrl => ({ productId: id, imageUrl })),
+      });
     }
     
     return prisma.product.findUnique({
@@ -142,9 +182,8 @@ export class ProductsService {
     });
     
     if (product?.images?.length) {
-      for (const img of product.images) {
-        await this.minioService.deleteImage(img.imageUrl);
-      }
+      // Delete images in parallel
+      await Promise.all(product.images.map(img => this.minioService.deleteImage(img.imageUrl)));
     }
     
     return prisma.product.delete({ where: { id } });
