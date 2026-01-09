@@ -1,5 +1,4 @@
 import { Injectable, Inject, OnModuleInit, Logger } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import prisma from 'lib/prisma';
 import { REDIS_CLIENT } from '../products/redis.module';
 import Redis from 'ioredis';
@@ -56,7 +55,6 @@ export class OrdersService implements OnModuleInit {
   async create(userId: number, createOrderData: any) {
     let totalPrice = 0;
 
-    // Verify all products exist and check inventory
     for (const item of createOrderData) {
       const product = await prisma.product.findUnique({
         where: { id: item.productId },
@@ -71,7 +69,6 @@ export class OrdersService implements OnModuleInit {
         throw new Error(`Product "${product.name}" has no inventory`);
       }
 
-      // Get reserved quantity from Redis
       const reservedQty = await this.redis.get(`product:${item.productId}:reserved`);
       const reserved = reservedQty ? parseInt(reservedQty) : 0;
       const availableQty = product.inventory.quantity - reserved;
@@ -84,7 +81,7 @@ export class OrdersService implements OnModuleInit {
       totalPrice += product.price * item.quantity;
     }
     
-    // Create order
+  
     const order = await prisma.order.create({
       data: {
         clientId: userId,

@@ -1,6 +1,6 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
@@ -22,7 +22,12 @@ export class ResponseInterceptor implements NestInterceptor {
         success: true,
         data,
         timestamp: new Date().toISOString()
-      }))
+      })),
+      catchError(error => {
+        const responseTime = Date.now() - now;
+        this.logger.error(`✗ ${method} ${url} - ${responseTime}ms - Error: ${error.message}`);
+        return throwError(() => error);
+      })
     );
   }
 }

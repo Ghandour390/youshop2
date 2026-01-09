@@ -5,6 +5,7 @@ import { AuthModule } from './auth/auth.module';
 import { CategorieModule } from './categorie/categorie.module';
 import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
+import { PrismaModule } from './prisma/prisma.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
@@ -16,10 +17,13 @@ import { StripeModule } from './stripe/stripe.module';
       ttl: 60000,
       limit: 100,
     }]),
-    AuthModule, 
-    CategorieModule, 
-    ProductsModule, 
-    OrdersModule, MailModule, StripeModule
+    PrismaModule,
+    AuthModule,
+    CategorieModule,
+    ProductsModule,
+    OrdersModule,
+    MailModule,
+    StripeModule
   ],
   controllers: [AppController],
   providers: [
