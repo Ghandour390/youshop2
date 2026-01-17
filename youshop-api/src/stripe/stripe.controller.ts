@@ -127,7 +127,7 @@ export class StripeController {
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new HttpException(
-        { success: false, message: error.message },
+        { success: false, message: (error as Error).message },
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -197,7 +197,7 @@ export class StripeController {
       };
     } catch (error) {
       throw new HttpException(
-        { success: false, message: error.message },
+        { success: false, message: (error as Error).message },
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -213,7 +213,7 @@ export class StripeController {
   async handleWebhook(@RawBody() rawBody: Buffer, @Req() req: Request) {
     const stripe = this.stripeService.getStripeInstance();
     const sig = req.headers['stripe-signature'] as string;
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
     try {
       const event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret);
@@ -244,7 +244,7 @@ export class StripeController {
 
       return { received: true };
     } catch (error) {
-      throw new HttpException(`Webhook error: ${error.message}`, HttpStatus.BAD_REQUEST);
+      throw new HttpException(`Webhook error: ${(error as Error).message}`, HttpStatus.BAD_REQUEST);
     }
   }
 

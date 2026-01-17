@@ -24,7 +24,7 @@ export class OrdersController {
       const signature = req.headers['stripe-signature'] as string;
       return await this.ordersService.handleStripeWebhook(rawBody, signature);
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      throw new HttpException((error as Error).message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -41,7 +41,7 @@ export class OrdersController {
     try {
       return await this.ordersService.create((req.user as any).id, createOrderDto.items);
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      throw new HttpException((error as Error).message, HttpStatus.BAD_REQUEST);
     }
   }
 
@@ -103,7 +103,7 @@ export class OrdersController {
     try {
       return await this.ordersService.confirmPayment(id);
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+      throw new HttpException((error as Error).message, HttpStatus.BAD_REQUEST);
     }
   }
 }

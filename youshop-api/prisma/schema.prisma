@@ -89,7 +89,7 @@ model OrderItem {
 
 model Product {
   id          Int            @id @default(autoincrement())
-  name        String
+  name        String         @unique
   description String?
   price       Float
   categoryId  Int
@@ -125,4 +125,15 @@ model Inventory {
 
   @@index([quantity])
   @@map("inventories")
+}
+model Notification {
+  id            Int      @id @default(autoincrement())
+  notifiableId  Int
+  type          String
+  data          Json
+  readAt        DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([notifiableId])
+  @@map("notifications")
 }

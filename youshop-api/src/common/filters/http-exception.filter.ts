@@ -1,5 +1,4 @@
 import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
-import { Request, Response } from 'express';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -7,8 +6,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const response = ctx.getResponse();
+    const request = ctx.getRequest();
 
     const status = exception instanceof HttpException
       ? exception.getStatus()
@@ -35,7 +34,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.error(`Stack: ${exception.stack}`);
     }
 
-    response.status(status).json(errorResponse);
+    response.status(status).send(errorResponse);
   }
 }
 
@@ -45,8 +44,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
   catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const response = ctx.getResponse();
+    const request = ctx.getRequest();
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
 
@@ -63,6 +62,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       `❌ ${request.method} ${request.url} - Status: ${status} - Error: ${JSON.stringify(errorResponse.message)}`
     );
 
-    response.status(status).json(errorResponse);
+    response.status(status).send(errorResponse);
   }
 }

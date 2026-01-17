@@ -10,6 +10,8 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { MailModule } from './mail/mail.module';
 import { StripeModule } from './stripe/stripe.module';
+import { NotificationModule } from './notification/notification.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -23,7 +25,9 @@ import { StripeModule } from './stripe/stripe.module';
     ProductsModule,
     OrdersModule,
     MailModule,
-    StripeModule
+    StripeModule,
+    NotificationModule,
+    UserModule
   ],
   controllers: [AppController],
   providers: [

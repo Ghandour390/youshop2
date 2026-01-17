@@ -68,4 +68,17 @@ class motPassOublieDto {
   email: string;
 }
 
+export class RefreshTokenDto {
+  @ApiProperty({ example: 'uuid-refresh-token' })
+  @IsString()
+  refresh_token: string;
+}
+
+export class LogoutDto {
+  @ApiProperty({ example: 'uuid-refresh-token', required: false })
+  @IsOptional()
+  @IsString()
+  refresh_token?: string;
+}
+
 export { motPassOublieDto };

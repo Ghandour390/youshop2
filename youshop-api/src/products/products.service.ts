@@ -55,38 +55,39 @@ export class ProductsService {
       },
     });
 
+    // Enrich products with reserved quantities and image URLs
+    await this.enrichProducts(products);
+
+    return products;
+  }
+
+  private async enrichProducts(products: any[]) {
+    if (!products || products.length === 0) return products;
+
     // Batch Redis operations for better performance (avoid N+1)
     const productIds = products.map(p => p.id);
     const reservedKeys = productIds.map(id => `product:${id}:reserved`);
-    
+
     // Single Redis call for all reserved quantities
-    const reservedValues = reservedKeys.length > 0 
-      ? await this.redis.mget(...reservedKeys) 
+    const reservedValues = reservedKeys.length > 0
+      ? await this.redis.mget(...reservedKeys)
       : [];
 
     // Process all image URLs in parallel
     const imageUrlPromises: Promise<{ productId: number; imageId: number; url: string | null }>[] = [];
-    
+
     for (const product of products) {
       if (product.images?.length) {
         for (const img of product.images) {
           imageUrlPromises.push(
             this.minioService.getImageUrl(img.imageUrl)
-              .then(url => ({
-                productId: product.id,
-                imageId: img.id,
-                url,
-              }))
-              .catch(() => ({
-                productId: product.id,
-                imageId: img.id,
-                url: null,
-              }))
+              .then(url => ({ productId: product.id, imageId: img.id, url }))
+              .catch(() => ({ productId: product.id, imageId: img.id, url: null as string | null }))
           );
         }
       }
     }
-    
+
     const imageUrls = await Promise.all(imageUrlPromises);
     const imageUrlMap = new Map(imageUrls.map(item => [`${item.productId}-${item.imageId}`, item.url]));
 
@@ -94,7 +95,7 @@ export class ProductsService {
     for (let i = 0; i < products.length; i++) {
       const product = products[i];
       if (product.inventory) {
-        const reserved = reservedValues[i] ? parseInt(reservedValues[i]) : 0;
+        const reserved = reservedValues[i] ? parseInt(reservedValues[i] as string) : 0;
         (product as any).availableQuantity = product.inventory.quantity - reserved;
       }
       if (product.images?.length) {
@@ -107,7 +108,7 @@ export class ProductsService {
     return products;
   }
 
-
+  
 
   async findOne(id: number) {
     const product = await prisma.product.findUnique({
@@ -118,23 +119,43 @@ export class ProductsService {
         images: true,
       },
     });
+    const products = [product];
+    await this.enrichProducts(products);
 
-    if (product && product.inventory) {
-      const reservedQty = await this.redis.get(`product:${id}:reserved`);
-      const reserved = reservedQty ? parseInt(reservedQty) : 0;
-      (product as any).availableQuantity = product.inventory.quantity - reserved;
-    }
+    // if (product && product.inventory) {
+    //   const reservedQty = await this.redis.get(`product:${id}:reserved`);
+    //   const reserved = reservedQty ? parseInt(reservedQty) : 0;
+    //   (product as any).availableQuantity = product.inventory.quantity - reserved;
+    // }
     
-    if (product?.images?.length) {
-      // Get all image URLs in parallel
-      const urlPromises = product.images.map(img => this.minioService.getImageUrl(img.imageUrl));
-      const urls = await Promise.all(urlPromises);
-      product.images.forEach((img, index) => {
-        (img as any).url = urls[index];
-      });
-    }
-
+    // if (product?.images?.length) {
+    //   // Get all image URLs in parallel
+    //   const urlPromises = product.images.map(img => this.minioService.getImageUrl(img.imageUrl));
+    //   const urls = await Promise.all(urlPromises);
+    //   product.images.forEach((img, index) => {
+    //     (img as any).url = urls[index];
+    //   });
+    // }
+    
     return product;
+  }
+
+  async search(name: string) {
+    const products = await prisma.product.findMany({
+      where: {
+        name: {
+          contains: name,
+          mode: 'insensitive',
+        },
+      },
+      include: {
+        category: true,
+        inventory: true,
+        images: true,
+      },
+    });
+    await this.enrichProducts(products);
+    return products;
   }
 
   async update(id: number, dataUpdateProductDto: any, images?: Express.Multer.File[]) {

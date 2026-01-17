@@ -8,10 +8,21 @@ export class ResponseInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
+    const response = context.switchToHttp().getResponse();
     const { method, url, ip } = request;
     const now = Date.now();
 
     this.logger.log(`→ ${method} ${url} - IP: ${ip}`);
+
+    // Skip interceptor for redirect routes (like OAuth callbacks)
+    if (url.includes('/auth/google/callback') || url.includes('/auth/google')) {
+      return next.handle().pipe(
+        tap(() => {
+          const responseTime = Date.now() - now;
+          this.logger.log(`← ${method} ${url} - ${responseTime}ms (redirect)`);
+        })
+      );
+    }
 
     return next.handle().pipe(
       tap(() => {

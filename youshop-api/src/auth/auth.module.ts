@@ -4,7 +4,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
-
+import { GoogleStrategy } from './google.strategy';
 import { MailModule } from '../mail/mail.module';
 import { RedisModule } from '../products/redis.module';
 
@@ -19,7 +19,7 @@ import { RedisModule } from '../products/redis.module';
     RedisModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, GoogleStrategy],
   exports: [AuthService],
 })
 export class AuthModule {}

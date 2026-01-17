@@ -4,14 +4,18 @@ import { REDIS_CLIENT } from '../products/redis.module';
 import Redis from 'ioredis';
 import { StripeService } from 'src/stripe/stripe.service';
 import { Stripe } from 'stripe';
+import { NotificationService } from 'src/notification/notification.service';
 
 
 @Injectable()
 export class OrdersService implements OnModuleInit {
   private readonly logger = new Logger(OrdersService.name);
 
-  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis,
-  @Inject(StripeService) private readonly stripeService: StripeService) {}
+  constructor(
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(StripeService) private readonly stripeService: StripeService,
+    @Inject(NotificationService) private readonly notificationService: NotificationService,
+  ) {}
 
   async onModuleInit() {
     this.startExpirationListener();
@@ -38,7 +42,12 @@ export class OrdersService implements OnModuleInit {
               where: { id: orderId },
               data: { status: 'expired' }
             });
-            
+            this.notificationService.create({
+              notifiableId: order.clientId,
+              type: 'OrderExpired',
+              data: { orderId, message: 'Your order has expired due to non-payment.' }
+            });
+
             for (const item of order.items) {
               await this.redis.decrby(`product:${item.productId}:reserved`, item.quantity);
             }
@@ -207,7 +216,11 @@ export class OrdersService implements OnModuleInit {
     }
     pipeline.del(`order:${orderId}`);
     await pipeline.exec();
-
+    this.notificationService.create({
+      notifiableId: order.clientId,
+      type: 'PaymentConfirmed',
+      data: { message: `Your payment for order ${order.items.map((item: any) => item.product.name).join(', ')} has been confirmed.` }
+    });
     return { message: 'Payment confirmed, inventory updated' };
   }
 
@@ -239,7 +252,7 @@ export class OrdersService implements OnModuleInit {
         
       }
     }
-    
+    this.logger.log(`✅ Handled Stripe webhook event: ${event.type}`, Date.now().toString());
     return { received: true };
   }
 }
